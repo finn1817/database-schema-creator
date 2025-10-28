@@ -1,0 +1,94 @@
+companies
+  id (primary)
+  name string
+  industry string
+  website url
+  headquarters_address text
+  founded_date date
+  employee_count number
+  revenue number
+  created_at timestamp
+
+departments
+  id (primary)
+  name string
+  code string unique
+  company_id -> references companies
+  manager_id -> references employees
+  budget number
+  description text
+  created_at timestamp
+
+employees
+  id (primary)
+  first_name string
+  last_name string
+  email email unique
+  phone string
+  job_title string
+  department_id -> references departments
+  manager_id -> references employees
+  salary number
+  employment_type string
+  hire_date date
+  termination_date date
+  is_active boolean
+  emergency_contact_name string
+  emergency_contact_phone string
+  created_at timestamp
+
+projects
+  id (primary)
+  name string
+  code string unique
+  description text
+  department_id -> references departments
+  start_date date
+  end_date date
+  budget number
+  status string
+  priority string
+  created_at timestamp
+
+project_assignments
+  id (primary)
+  project_id -> references projects
+  employee_id -> references employees
+  role string
+  allocation_percentage number
+  assigned_at timestamp
+  removed_at timestamp
+
+time_entries
+  id (primary)
+  employee_id -> references employees
+  project_id -> references projects
+  hours number
+  description text
+  entry_date date
+  billable boolean
+  approved boolean
+  created_at timestamp
+
+performance_reviews
+  id (primary)
+  employee_id -> references employees
+  reviewer_id -> references employees
+  review_period string
+  rating number
+  strengths text
+  areas_for_improvement text
+  goals text
+  review_date date
+
+leave_requests
+  id (primary)
+  employee_id -> references employees
+  leave_type string
+  start_date date
+  end_date date
+  days_requested number
+  reason text
+  status string
+  approved_by -> references employees
+  created_at timestamp
