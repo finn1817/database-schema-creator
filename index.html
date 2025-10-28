@@ -1,0 +1,2040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Schema Creator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3182ce;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+        }
+
+        /* Tabs */
+        .tabs {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            color: #718096;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #4299e1;
+        }
+
+        .tab.active {
+            color: #4299e1;
+            border-bottom-color: #4299e1;
+        }
+
+        /* Main Content */
+        .content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .view {
+            display: none;
+            height: 100%;
+            overflow: auto;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        /* Text Editor View */
+        .text-editor {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            height: 100%;
+            gap: 1rem;
+            padding: 1.5rem;
+        }
+
+        .editor-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #schemaInput {
+            flex: 1;
+            padding: 1.5rem;
+            border: none;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            background: #fafafa;
+        }
+
+        .template-selector {
+            padding: 1rem;
+        }
+
+        .template-selector select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .help-section {
+            padding: 1rem;
+            background: #f7fafc;
+            font-size: 0.8rem;
+            color: #4a5568;
+        }
+
+        .help-section h4 {
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+        }
+
+        .help-section code {
+            background: #edf2f7;
+            padding: 0.125rem 0.375rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+        }
+
+        /* Rich Text View - NEW! */
+        .rich-text-view {
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 1rem;
+            height: 100%;
+        }
+
+        .rich-editor-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #richTextInput {
+            flex: 1;
+            padding: 1.5rem;
+            border: none;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            resize: none;
+            outline: none;
+            background: #fafafa;
+        }
+
+        .rich-preview {
+            flex: 1;
+            padding: 1.5rem;
+            overflow: auto;
+        }
+
+        .tree-node {
+            margin-left: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .tree-node.level-1 {
+            margin-left: 0;
+        }
+
+        .tree-node.level-2 {
+            margin-left: 2rem;
+        }
+
+        .tree-node.level-3 {
+            margin-left: 4rem;
+        }
+
+        .tree-node.level-4 {
+            margin-left: 6rem;
+        }
+
+        .node-label {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            background: #edf2f7;
+            border-radius: 4px;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            color: #2d3748;
+            border-left: 3px solid #4299e1;
+        }
+
+        .node-label.table {
+            background: #bee3f8;
+            border-left-color: #2c5282;
+            font-weight: 600;
+        }
+
+        .node-label.record {
+            background: #c6f6d5;
+            border-left-color: #276749;
+        }
+
+        .node-properties {
+            display: inline-block;
+            margin-left: 0.5rem;
+            font-size: 0.85rem;
+            color: #718096;
+            font-family: 'Monaco', monospace;
+        }
+
+        .property-item {
+            display: inline-block;
+            margin-right: 1rem;
+        }
+
+        .property-key {
+            color: #805ad5;
+            font-weight: 500;
+        }
+
+        .property-value {
+            color: #38a169;
+        }
+
+        .rich-help {
+            padding: 1rem;
+        }
+
+        .rich-help h4 {
+            margin-bottom: 0.75rem;
+            color: #2d3748;
+            font-size: 0.95rem;
+        }
+
+        .rich-help p {
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: #4a5568;
+        }
+
+        .rich-help code {
+            background: #edf2f7;
+            padding: 0.125rem 0.375rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            color: #d53f8c;
+        }
+
+        .rich-help .example {
+            background: #f7fafc;
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            font-family: 'Monaco', monospace;
+            font-size: 0.75rem;
+            line-height: 1.6;
+        }
+
+        /* Schema Text View */
+        .schema-text-view {
+            padding: 1.5rem;
+        }
+
+        .output-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .output-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .output-header select {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .output-content {
+            padding: 1.5rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            background: #1a202c;
+            color: #e2e8f0;
+            overflow: auto;
+            max-height: calc(100vh - 250px);
+        }
+
+        /* Schema Visual View */
+        .schema-visual-view {
+            position: relative;
+            height: 100%;
+            background: #f7fafc;
+        }
+
+        .canvas-container {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            position: relative;
+        }
+
+        .canvas {
+            min-width: 100%;
+            min-height: 100%;
+            position: relative;
+        }
+
+        .table-card {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            min-width: 250px;
+            cursor: move;
+            transition: box-shadow 0.2s;
+        }
+
+        .table-card:hover {
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .table-card.dragging {
+            opacity: 0.7;
+            cursor: grabbing;
+        }
+
+        .table-header {
+            padding: 1rem;
+            background: #4299e1;
+            color: white;
+            font-weight: 600;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-body {
+            padding: 0;
+        }
+
+        .field-row {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+
+        .field-row:last-child {
+            border-bottom: none;
+        }
+
+        .field-name {
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        .field-type {
+            color: #718096;
+            font-size: 0.8rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        .field-badge {
+            display: inline-block;
+            padding: 0.125rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            margin-left: 0.5rem;
+        }
+
+        .badge-primary {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        .badge-warning {
+            background: #feebc8;
+            color: #7c2d12;
+        }
+
+        svg.connections {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .connection-line {
+            fill: none;
+            stroke: #4299e1;
+            stroke-width: 2;
+            opacity: 0.6;
+        }
+
+        .connection-arrow {
+            fill: #4299e1;
+            opacity: 0.6;
+        }
+
+        /* Settings Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: auto;
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .setting-row {
+            margin-bottom: 1.5rem;
+        }
+
+        .setting-row label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        .setting-row input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .modal-footer {
+            margin-top: 2rem;
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+        }
+
+        /* Validation Warnings */
+        .warnings-panel {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            max-width: 400px;
+            z-index: 100;
+        }
+
+        .warning-item {
+            background: #fffbeb;
+            border: 1px solid #fbbf24;
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: #78350f;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Toolbar */
+        .visual-toolbar {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: white;
+            border-radius: 8px;
+            padding: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+
+        .toolbar-btn {
+            padding: 0.5rem;
+            background: transparent;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .toolbar-btn:hover {
+            background: #f7fafc;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .text-editor, .rich-text-view {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🗄️ Database Schema Creator</h1>
+            <div class="header-actions">
+                <button class="btn-secondary" onclick="app.openSettings()">⚙️ Settings</button>
+                <button class="btn-success" onclick="app.exportPDF()">📥 Download PDF</button>
+                <button class="btn-primary" onclick="app.clearAll()">🗑️ Clear</button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-view="text-editor" onclick="app.switchView('text-editor')">Text Editor</button>
+            <button class="tab" data-view="rich-text" onclick="app.switchView('rich-text')">Rich Text</button>
+            <button class="tab" data-view="schema-text" onclick="app.switchView('schema-text')">Schema (Text)</button>
+            <button class="tab" data-view="schema-visual" onclick="app.switchView('schema-visual')">Schema (Visual)</button>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Text Editor View -->
+            <div class="view active" id="text-editor">
+                <div class="text-editor">
+                    <div class="editor-panel">
+                        <div class="editor-header">
+                            Schema Input
+                            <span style="font-size: 0.8rem; color: #718096; font-weight: 400;">Auto-saves to browser</span>
+                        </div>
+                        <textarea id="schemaInput" placeholder="Start typing your schema...
+
+Example:
+users
+  id (primary)
+  email string unique
+  name text
+  created_at timestamp
+
+posts
+  id (primary)
+  user_id -> references users
+  title string
+  content text
+  published boolean"></textarea>
+                    </div>
+
+                    <div class="editor-panel">
+                        <div class="editor-header">Templates & Help</div>
+                        <div class="template-selector">
+                            <label style="font-size: 0.875rem; font-weight: 500; display: block; margin-bottom: 0.5rem;">Load Template:</label>
+                            <select onchange="app.loadTemplate(this.value)">
+                                <option value="">-- Select Template --</option>
+                                <option value="school">School Management</option>
+                                <option value="messages">Messages App</option>
+                                <option value="workplace">Workplace/HR</option>
+                                <option value="ecommerce">E-Commerce</option>
+                            </select>
+                        </div>
+                        <div class="help-section">
+                            <h4>Quick Guide:</h4>
+                            <p style="margin-bottom: 0.5rem;"><strong>Tables:</strong> Just type the name</p>
+                            <p style="margin-bottom: 0.5rem;"><strong>Fields:</strong> Indent with 2+ spaces</p>
+                            <p style="margin-bottom: 0.5rem;"><code>name string</code> or <code>name text</code></p>
+                            <p style="margin-bottom: 0.5rem;"><strong>Primary Key:</strong> <code>id (primary)</code></p>
+                            <p style="margin-bottom: 0.5rem;"><strong>Unique:</strong> <code>email unique</code></p>
+                            <p style="margin-bottom: 0.5rem;"><strong>References:</strong></p>
+                            <p style="margin-bottom: 0.5rem;"><code>user_id -> users</code></p>
+                            <p style="margin-bottom: 0.5rem;"><code>user_id references users</code></p>
+                            <p style="margin-bottom: 0.5rem;"><code>belongs to users</code></p>
+                            <hr style="margin: 1rem 0; border: none; border-top: 1px solid #e2e8f0;">
+                            <h4>Field Types:</h4>
+                            <p style="font-size: 0.75rem; line-height: 1.5;">
+                                string, text, number, int, boolean, timestamp, date, uuid, email, url, json
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rich Text View - NEW! -->
+            <div class="view" id="rich-text">
+                <div class="rich-text-view">
+                    <div class="rich-editor-panel">
+                        <div class="editor-header">
+                            Rich Text Input
+                            <span style="font-size: 0.8rem; color: #718096; font-weight: 400;">Hierarchical data view</span>
+                        </div>
+                        <textarea id="richTextInput" placeholder="Define your data structure with hierarchy...
+
+Example:
+- Friends
+-- Tommy
+-- Billy
+-- Ben
+--- Tommy (age: 24, lastName: Smith, email: tommy@example.com)
+--- Billy (age: 20, lastName: Jones, active: true)
+--- Ben (age: 18, lastName: Williams, city: NYC)
+
+- Posts
+-- Post 1
+-- Post 2
+--- Post 1 (title: Hello World, content: My first post, published: true)
+--- Post 2 (title: Second Post, content: Another post, views: 150)"></textarea>
+                    </div>
+
+                    <div class="rich-editor-panel">
+                        <div class="editor-header">Live Preview</div>
+                        <div class="rich-preview" id="richPreview">
+                            <p style="color: #718096; font-size: 0.875rem;">Start typing to see your data structure...</p>
+                        </div>
+                        <div class="rich-help">
+                            <h4>📝 How Rich Text Works:</h4>
+                            <p><strong>Level 1 (Tables):</strong> <code>- TableName</code></p>
+                            <p><strong>Level 2 (Fields/Records):</strong> <code>-- FieldName</code></p>
+                            <p><strong>Level 3 (Data/Properties):</strong> <code>--- Name (prop: value, prop2: value2)</code></p>
+                            
+                            <div class="example">
+- Users<br>
+-- id<br>
+-- email<br>
+-- name<br>
+--- John (age: 30, role: admin)<br>
+--- Jane (age: 25, role: user)
+                            </div>
+
+                            <h4 style="margin-top: 1rem;">✨ Smart Features:</h4>
+                            <p>• Auto-detects field types from values</p>
+                            <p>• Creates relationships automatically</p>
+                            <p>• Infers primary keys from structure</p>
+                            <p>• Supports nested properties</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schema Text View -->
+            <div class="view" id="schema-text">
+                <div class="schema-text-view">
+                    <div class="output-container">
+                        <div class="output-header">
+                            <h3>Generated Schema</h3>
+                            <div>
+                                <select id="exportFormat" onchange="app.updateSchemaText()">
+                                    <option value="sql-postgres">SQL (PostgreSQL)</option>
+                                    <option value="sql-mysql">SQL (MySQL)</option>
+                                    <option value="prisma">Prisma Schema</option>
+                                    <option value="mongodb">MongoDB Schema</option>
+                                    <option value="typescript">TypeScript Interfaces</option>
+                                    <option value="json">JSON Schema</option>
+                                </select>
+                                <button class="btn-secondary" style="margin-left: 0.5rem;" onclick="app.copyToClipboard()">📋 Copy</button>
+                            </div>
+                        </div>
+                        <pre class="output-content" id="schemaOutput">No schema generated yet. Start typing in the Text Editor or Rich Text tab!</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schema Visual View -->
+            <div class="view" id="schema-visual">
+                <div class="schema-visual-view">
+                    <div class="visual-toolbar">
+                        <button class="toolbar-btn" onclick="app.autoLayout()">🔄 Auto Layout</button>
+                        <button class="toolbar-btn" onclick="app.resetZoom()">🔍 Reset View</button>
+                    </div>
+                    <div class="canvas-container" id="canvasContainer">
+                        <svg class="connections" id="connectionsLayer"></svg>
+                        <div class="canvas" id="canvas"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">Settings</div>
+            
+            <div class="setting-row">
+                <label>
+                    <input type="checkbox" id="curvedLines" checked onchange="app.updateSettings()">
+                    Use curved connection lines
+                </label>
+            </div>
+
+            <div class="setting-row">
+                <label>
+                    <input type="checkbox" id="autoSave" checked onchange="app.updateSettings()">
+                    Auto-save to browser storage
+                </label>
+            </div>
+
+            <div class="setting-row">
+                <label>
+                    <input type="checkbox" id="liveValidation" checked onchange="app.updateSettings()">
+                    Show live validation warnings
+                </label>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="app.closeSettings()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warnings Panel -->
+    <div class="warnings-panel" id="warningsPanel"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        const app = {
+            schema: { tables: [], relationships: [] },
+            settings: {
+                curvedLines: true,
+                autoSave: true,
+                liveValidation: true
+            },
+            currentView: 'text-editor',
+            dragging: null,
+            dragOffset: { x: 0, y: 0 },
+            richData: { tables: [], records: [] },
+
+            init() {
+                this.loadSettings();
+                this.loadFromStorage();
+                this.setupEventListeners();
+                this.parseSchema();
+            },
+
+            setupEventListeners() {
+                const input = document.getElementById('schemaInput');
+                input.addEventListener('input', () => {
+                    this.parseSchema();
+                    if (this.settings.autoSave) {
+                        this.saveToStorage();
+                    }
+                });
+
+                // Rich text editor
+                const richInput = document.getElementById('richTextInput');
+                richInput.addEventListener('input', () => {
+                    this.parseRichText();
+                    if (this.settings.autoSave) {
+                        this.saveToStorage();
+                    }
+                });
+
+                // Dragging for visual view
+                const canvas = document.getElementById('canvas');
+                canvas.addEventListener('mousedown', (e) => this.startDrag(e));
+                document.addEventListener('mousemove', (e) => this.drag(e));
+                document.addEventListener('mouseup', () => this.endDrag());
+            },
+
+            parseRichText() {
+                const input = document.getElementById('richTextInput').value;
+                const lines = input.split('\n');
+                
+                this.richData = { tables: [], records: [] };
+                let currentTable = null;
+                let currentField = null;
+                const preview = document.getElementById('richPreview');
+                let previewHTML = '';
+
+                lines.forEach(line => {
+                    if (!line.trim()) return;
+
+                    const dashCount = (line.match(/^-+/)?.[0] || '').length;
+                    const content = line.replace(/^-+\s*/, '').trim();
+
+                    if (dashCount === 1) {
+                        // Level 1: Table
+                        currentTable = {
+                            name: content,
+                            id: content.toLowerCase().replace(/\s+/g, '_'),
+                            fields: [],
+                            records: []
+                        };
+                        this.richData.tables.push(currentTable);
+                        previewHTML += `<div class="tree-node level-1"><span class="node-label table">${content}</span></div>`;
+                    } 
+                    else if (dashCount === 2 && currentTable) {
+                        // Level 2: Field or record name
+                        currentField = {
+                            name: content,
+                            type: 'string'
+                        };
+                        currentTable.fields.push(currentField);
+                        previewHTML += `<div class="tree-node level-2"><span class="node-label">${content}</span></div>`;
+                    }
+                    else if (dashCount === 3 && currentTable) {
+                        // Level 3: Record with properties
+                        const record = this.parseRichRecord(content);
+                        if (record) {
+                            currentTable.records.push(record);
+                            
+                            // Add fields from record properties
+                            Object.entries(record.properties).forEach(([key, value]) => {
+                                const existingField = currentTable.fields.find(f => f.name === key);
+                                if (!existingField) {
+                                    currentTable.fields.push({
+                                        name: key,
+                                        type: this.inferTypeFromValue(value),
+                                        unique: false,
+                                        required: false
+                                    });
+                                }
+                            });
+
+                            let propsHTML = '<span class="node-properties">';
+                            Object.entries(record.properties).forEach(([key, value]) => {
+                                propsHTML += `<span class="property-item"><span class="property-key">${key}:</span> <span class="property-value">${value}</span></span>`;
+                            });
+                            propsHTML += '</span>';
+
+                            previewHTML += `<div class="tree-node level-3"><span class="node-label record">${record.name}</span>${propsHTML}</div>`;
+                        }
+                    }
+                });
+
+                preview.innerHTML = previewHTML || '<p style="color: #718096; font-size: 0.875rem;">Start typing to see your data structure...</p>';
+
+                // Convert rich data to schema format
+                this.convertRichToSchema();
+            },
+
+            parseRichRecord(content) {
+                // Format: Name (prop1: value1, prop2: value2, ...)
+                const match = content.match(/^([^(]+)\s*\(([^)]+)\)$/);
+                if (!match) return null;
+
+                const name = match[1].trim();
+                const propsStr = match[2];
+                const properties = {};
+
+                // Parse properties
+                const propPairs = propsStr.split(',');
+                propPairs.forEach(pair => {
+                    const [key, value] = pair.split(':').map(s => s.trim());
+                    if (key && value) {
+                        properties[key] = this.parseValue(value);
+                    }
+                });
+
+                return { name, properties };
+            },
+
+            parseValue(str) {
+                // Try to parse as number
+                if (!isNaN(str) && str.trim() !== '') {
+                    return parseFloat(str);
+                }
+                // Try to parse as boolean
+                if (str.toLowerCase() === 'true') return true;
+                if (str.toLowerCase() === 'false') return false;
+                // Return as string
+                return str;
+            },
+
+            inferTypeFromValue(value) {
+                if (typeof value === 'number') return 'number';
+                if (typeof value === 'boolean') return 'boolean';
+                if (typeof value === 'string') {
+                    if (/^\d{4}-\d{2}-\d{2}/.test(value)) return 'date';
+                    if (/^[\w.-]+@[\w.-]+\.\w+$/.test(value)) return 'email';
+                    if (/^https?:\/\//.test(value)) return 'url';
+                }
+                return 'string';
+            },
+
+            convertRichToSchema() {
+                // Convert rich data structure to standard schema format
+                this.schema = { tables: [], relationships: [] };
+
+                this.richData.tables.forEach((richTable, index) => {
+                    const table = {
+                        id: richTable.id,
+                        name: richTable.name,
+                        fields: [],
+                        position: this.getStoredPosition(richTable.name) || this.generatePosition(index)
+                    };
+
+                    // Add ID field if not exists
+                    if (!richTable.fields.find(f => f.name === 'id')) {
+                        table.fields.push({
+                            name: 'id',
+                            type: 'uuid',
+                            primaryKey: true,
+                            unique: true,
+                            required: true
+                        });
+                    }
+
+                    // Add all fields
+                    richTable.fields.forEach(field => {
+                        const isPrimary = field.name === 'id';
+                        table.fields.push({
+                            name: field.name,
+                            type: field.type || 'string',
+                            primaryKey: isPrimary,
+                            unique: isPrimary,
+                            required: isPrimary
+                        });
+                    });
+
+                    this.schema.tables.push(table);
+                });
+
+                this.updateAllViews();
+            },
+
+            parseSchema() {
+                const input = document.getElementById('schemaInput').value;
+                const lines = input.split('\n');
+                
+                this.schema = { tables: [], relationships: [] };
+                let currentTable = null;
+                const warnings = [];
+
+                lines.forEach((line, index) => {
+                    const trimmed = line.trim();
+                    if (!trimmed || trimmed.startsWith('//') || trimmed.startsWith('#')) return;
+
+                    const indent = line.search(/\S/);
+
+                    // Table definition (no indent)
+                    if (indent === 0 || indent === -1) {
+                        const tableName = this.extractTableName(trimmed);
+                        if (tableName) {
+                            currentTable = {
+                                id: tableName.toLowerCase().replace(/\s+/g, '_'),
+                                name: tableName,
+                                fields: [],
+                                position: this.getStoredPosition(tableName) || this.generatePosition(this.schema.tables.length)
+                            };
+                            this.schema.tables.push(currentTable);
+                        }
+                    }
+                    // Field definition (indented)
+                    else if (indent > 0 && currentTable) {
+                        const field = this.parseField(trimmed, currentTable.id);
+                        if (field) {
+                            currentTable.fields.push(field);
+
+                            // Check for references
+                            if (field.references) {
+                                const refExists = this.schema.tables.some(t => t.id === field.references);
+                                if (!refExists && this.settings.liveValidation) {
+                                    warnings.push(`Line ${index + 1}: Reference to "${field.references}" not found (yet)`);
+                                }
+
+                                this.schema.relationships.push({
+                                    from: `${currentTable.id}.${field.name}`,
+                                    to: `${field.references}.id`,
+                                    type: field.name.endsWith('s') ? 'many-to-many' : 'many-to-one'
+                                });
+                            }
+                        }
+                    }
+                });
+
+                // Validate primary keys
+                this.schema.tables.forEach(table => {
+                    const primaryKeys = table.fields.filter(f => f.primaryKey);
+                    if (primaryKeys.length > 1 && this.settings.liveValidation) {
+                        warnings.push(`Table "${table.name}" has multiple primary keys`);
+                    }
+                });
+
+                this.showWarnings(warnings);
+                this.updateAllViews();
+            },
+
+            extractTableName(line) {
+                // Remove common keywords
+                const cleaned = line.replace(/^(table|collection|model|create|make|add)\s+/i, '').trim();
+                return cleaned || null;
+            },
+
+            parseField(line, tableId) {
+                const field = {
+                    name: '',
+                    type: 'string',
+                    primaryKey: false,
+                    unique: false,
+                    required: false,
+                    references: null,
+                    defaultValue: null
+                };
+
+                // Extract field name (first word)
+                const parts = line.split(/\s+/);
+                field.name = parts[0].replace(/[(),:]/g, '');
+
+                // Check for primary key
+                if (/\(primary\)|primary\s+key|pk/i.test(line)) {
+                    field.primaryKey = true;
+                    field.type = 'uuid';
+                }
+
+                // Check for unique
+                if (/unique/i.test(line)) {
+                    field.unique = true;
+                }
+
+                // Check for required
+                if (/required|not\s+null/i.test(line)) {
+                    field.required = true;
+                }
+
+                // Check for references
+                const refMatch = line.match(/(?:->|references|belongs\s+to|links\s+to|connected\s+to|related\s+to)\s+(\w+)/i);
+                if (refMatch) {
+                    field.references = refMatch[1].toLowerCase().replace(/\s+/g, '_');
+                    field.type = 'reference';
+                }
+
+                // Infer type from field name if not specified
+                if (!field.primaryKey && !field.references) {
+                    field.type = this.inferType(line, field.name);
+                }
+
+                // Extract default value
+                const defaultMatch = line.match(/default\s+(\w+)/i);
+                if (defaultMatch) {
+                    field.defaultValue = defaultMatch[1];
+                }
+
+                return field;
+            },
+
+            inferType(line, fieldName) {
+                const lowerLine = line.toLowerCase();
+                const lowerName = fieldName.toLowerCase();
+
+                // Explicit type keywords
+                const typeMap = {
+                    'string|text|str|varchar|char': 'string',
+                    'number|int|integer|num|float|decimal': 'number',
+                    'bool|boolean': 'boolean',
+                    'timestamp|datetime|date': 'timestamp',
+                    'uuid|guid': 'uuid',
+                    'email': 'email',
+                    'url|link': 'url',
+                    'json|object': 'json'
+                };
+
+                for (const [pattern, type] of Object.entries(typeMap)) {
+                    const regex = new RegExp(`\\b(${pattern})\\b`, 'i');
+                    if (regex.test(lowerLine)) {
+                        return type;
+                    }
+                }
+
+                // Infer from field name patterns
+                if (lowerName.includes('email')) return 'email';
+                if (lowerName.includes('url') || lowerName.includes('link')) return 'url';
+                if (lowerName.includes('date') || lowerName.includes('time')) return 'timestamp';
+                if (lowerName.includes('count') || lowerName.includes('age') || lowerName.includes('price')) return 'number';
+                if (lowerName.includes('is_') || lowerName.includes('has_')) return 'boolean';
+                if (lowerName === 'id' || lowerName.endsWith('_id')) return 'uuid';
+
+                return 'string';
+            },
+
+            generatePosition(index) {
+                const cols = 3;
+                const row = Math.floor(index / cols);
+                const col = index % cols;
+                return {
+                    x: 50 + col * 350,
+                    y: 50 + row * 300
+                };
+            },
+
+            getStoredPosition(tableName) {
+                const positions = JSON.parse(localStorage.getItem('tablePositions') || '{}');
+                return positions[tableName];
+            },
+
+            savePosition(tableName, position) {
+                const positions = JSON.parse(localStorage.getItem('tablePositions') || '{}');
+                positions[tableName] = position;
+                localStorage.setItem('tablePositions', JSON.stringify(positions));
+            },
+
+            updateAllViews() {
+                this.updateSchemaText();
+                this.updateVisualSchema();
+            },
+
+            updateSchemaText() {
+                const format = document.getElementById('exportFormat').value;
+                const output = document.getElementById('schemaOutput');
+                
+                let code = '';
+                
+                switch(format) {
+                    case 'sql-postgres':
+                        code = this.generatePostgresSQL();
+                        break;
+                    case 'sql-mysql':
+                        code = this.generateMySQLSQL();
+                        break;
+                    case 'prisma':
+                        code = this.generatePrisma();
+                        break;
+                    case 'mongodb':
+                        code = this.generateMongoDB();
+                        break;
+                    case 'typescript':
+                        code = this.generateTypeScript();
+                        break;
+                    case 'json':
+                        code = this.generateJSON();
+                        break;
+                }
+                
+                output.textContent = code || 'No schema generated yet.';
+            },
+
+            generatePostgresSQL() {
+                if (this.schema.tables.length === 0) return '';
+                
+                let sql = '-- PostgreSQL Schema\n\n';
+                
+                this.schema.tables.forEach(table => {
+                    sql += `CREATE TABLE ${table.id} (\n`;
+                    
+                    const fieldDefs = table.fields.map(field => {
+                        let def = `  ${field.name} `;
+                        
+                        switch(field.type) {
+                            case 'uuid': def += 'UUID'; break;
+                            case 'string': def += 'VARCHAR(255)'; break;
+                            case 'number': def += 'INTEGER'; break;
+                            case 'boolean': def += 'BOOLEAN'; break;
+                            case 'timestamp': def += 'TIMESTAMP'; break;
+                            case 'date': def += 'DATE'; break;
+                            case 'email': def += 'VARCHAR(255)'; break;
+                            case 'url': def += 'TEXT'; break;
+                            case 'json': def += 'JSONB'; break;
+                            case 'reference': def += 'UUID'; break;
+                            default: def += 'TEXT';
+                        }
+                        
+                        if (field.primaryKey) def += ' PRIMARY KEY';
+                        if (field.unique) def += ' UNIQUE';
+                        if (field.required) def += ' NOT NULL';
+                        if (field.defaultValue) def += ` DEFAULT ${field.defaultValue}`;
+                        
+                        return def;
+                    });
+                    
+                    sql += fieldDefs.join(',\n');
+                    sql += '\n);\n\n';
+                    
+                    // Add foreign key constraints
+                    table.fields.forEach(field => {
+                        if (field.references) {
+                            sql += `ALTER TABLE ${table.id}\n`;
+                            sql += `  ADD CONSTRAINT fk_${table.id}_${field.name}\n`;
+                            sql += `  FOREIGN KEY (${field.name})\n`;
+                            sql += `  REFERENCES ${field.references}(id)\n`;
+                            sql += `  ON DELETE CASCADE;\n\n`;
+                        }
+                    });
+                });
+                
+                return sql;
+            },
+
+            generateMySQLSQL() {
+                if (this.schema.tables.length === 0) return '';
+                
+                let sql = '-- MySQL Schema\n\n';
+                
+                this.schema.tables.forEach(table => {
+                    sql += `CREATE TABLE ${table.id} (\n`;
+                    
+                    const fieldDefs = table.fields.map(field => {
+                        let def = `  ${field.name} `;
+                        
+                        switch(field.type) {
+                            case 'uuid': def += 'CHAR(36)'; break;
+                            case 'string': def += 'VARCHAR(255)'; break;
+                            case 'number': def += 'INT'; break;
+                            case 'boolean': def += 'BOOLEAN'; break;
+                            case 'timestamp': def += 'DATETIME'; break;
+                            case 'date': def += 'DATE'; break;
+                            case 'email': def += 'VARCHAR(255)'; break;
+                            case 'url': def += 'TEXT'; break;
+                            case 'json': def += 'JSON'; break;
+                            case 'reference': def += 'CHAR(36)'; break;
+                            default: def += 'TEXT';
+                        }
+                        
+                        if (field.primaryKey) def += ' PRIMARY KEY';
+                        if (field.unique) def += ' UNIQUE';
+                        if (field.required) def += ' NOT NULL';
+                        if (field.defaultValue) def += ` DEFAULT ${field.defaultValue}`;
+                        
+                        return def;
+                    });
+                    
+                    sql += fieldDefs.join(',\n');
+                    
+                    // Add foreign keys inline for MySQL
+                    table.fields.forEach(field => {
+                        if (field.references) {
+                            sql += `,\n  FOREIGN KEY (${field.name}) REFERENCES ${field.references}(id) ON DELETE CASCADE`;
+                        }
+                    });
+                    
+                    sql += '\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;\n\n';
+                });
+                
+                return sql;
+            },
+
+            generatePrisma() {
+                if (this.schema.tables.length === 0) return '';
+                
+                let schema = '// Prisma Schema\n\n';
+                schema += 'generator client {\n';
+                schema += '  provider = "prisma-client-js"\n';
+                schema += '}\n\n';
+                schema += 'datasource db {\n';
+                schema += '  provider = "postgresql"\n';
+                schema += '  url      = env("DATABASE_URL")\n';
+                schema += '}\n\n';
+                
+                this.schema.tables.forEach(table => {
+                    const modelName = this.toPascalCase(table.name);
+                    schema += `model ${modelName} {\n`;
+                    
+                    table.fields.forEach(field => {
+                        schema += `  ${field.name} `;
+                        
+                        switch(field.type) {
+                            case 'uuid': schema += 'String @id @default(uuid())'; break;
+                            case 'string': schema += 'String'; break;
+                            case 'number': schema += 'Int'; break;
+                            case 'boolean': schema += 'Boolean'; break;
+                            case 'timestamp': schema += 'DateTime'; break;
+                            case 'date': schema += 'DateTime'; break;
+                            case 'email': schema += 'String'; break;
+                            case 'url': schema += 'String'; break;
+                            case 'json': schema += 'Json'; break;
+                            case 'reference': 
+                                const refModel = this.toPascalCase(field.references);
+                                schema += `String\n  ${field.references.replace('_id', '')} ${refModel} @relation(fields: [${field.name}], references: [id])`;
+                                break;
+                            default: schema += 'String';
+                        }
+                        
+                        if (field.unique && !field.primaryKey) schema += ' @unique';
+                        if (field.defaultValue && field.type === 'boolean') {
+                            schema += ` @default(${field.defaultValue})`;
+                        }
+                        
+                        schema += '\n';
+                    });
+                    
+                    schema += '}\n\n';
+                });
+                
+                return schema;
+            },
+
+            generateMongoDB() {
+                if (this.schema.tables.length === 0) return '';
+                
+                let schemas = '// MongoDB Schemas (Mongoose)\n\n';
+                
+                this.schema.tables.forEach(table => {
+                    const modelName = this.toPascalCase(table.name);
+                    schemas += `const ${modelName}Schema = new Schema({\n`;
+                    
+                    table.fields.forEach(field => {
+                        if (field.name === 'id') return; // MongoDB uses _id
+                        
+                        schemas += `  ${field.name}: {\n`;
+                        schemas += `    type: `;
+                        
+                        switch(field.type) {
+                            case 'uuid':
+                            case 'string':
+                            case 'email':
+                            case 'url':
+                                schemas += 'String';
+                                break;
+                            case 'number':
+                                schemas += 'Number';
+                                break;
+                            case 'boolean':
+                                schemas += 'Boolean';
+                                break;
+                            case 'timestamp':
+                            case 'date':
+                                schemas += 'Date';
+                                break;
+                            case 'json':
+                                schemas += 'Schema.Types.Mixed';
+                                break;
+                            case 'reference':
+                                schemas += 'Schema.Types.ObjectId';
+                                schemas += `,\n    ref: '${this.toPascalCase(field.references)}'`;
+                                break;
+                            default:
+                                schemas += 'String';
+                        }
+                        
+                        if (field.required) schemas += ',\n    required: true';
+                        if (field.unique) schemas += ',\n    unique: true';
+                        if (field.defaultValue) schemas += `,\n    default: ${field.defaultValue}`;
+                        
+                        schemas += '\n  },\n';
+                    });
+                    
+                    schemas += '}, { timestamps: true });\n\n';
+                    schemas += `const ${modelName} = mongoose.model('${modelName}', ${modelName}Schema);\n\n`;
+                });
+                
+                return schemas;
+            },
+
+            generateTypeScript() {
+                if (this.schema.tables.length === 0) return '';
+                
+                let types = '// TypeScript Interfaces\n\n';
+                
+                this.schema.tables.forEach(table => {
+                    const interfaceName = this.toPascalCase(table.name);
+                    types += `interface ${interfaceName} {\n`;
+                    
+                    table.fields.forEach(field => {
+                        types += `  ${field.name}`;
+                        if (!field.required) types += '?';
+                        types += ': ';
+                        
+                        switch(field.type) {
+                            case 'uuid':
+                            case 'string':
+                            case 'email':
+                            case 'url':
+                                types += 'string';
+                                break;
+                            case 'number':
+                                types += 'number';
+                                break;
+                            case 'boolean':
+                                types += 'boolean';
+                                break;
+                            case 'timestamp':
+                            case 'date':
+                                types += 'Date';
+                                break;
+                            case 'json':
+                                types += 'any';
+                                break;
+                            case 'reference':
+                                types += 'string'; // ID reference
+                                break;
+                            default:
+                                types += 'string';
+                        }
+                        
+                        types += ';\n';
+                    });
+                    
+                    types += '}\n\n';
+                });
+                
+                return types;
+            },
+
+            generateJSON() {
+                return JSON.stringify(this.schema, null, 2);
+            },
+
+            updateVisualSchema() {
+                const canvas = document.getElementById('canvas');
+                const connectionsLayer = document.getElementById('connectionsLayer');
+                
+                // Clear existing
+                canvas.innerHTML = '';
+                connectionsLayer.innerHTML = '';
+                
+                if (this.schema.tables.length === 0) {
+                    canvas.innerHTML = '<div style="padding: 2rem; text-align: center; color: #718096;">No tables to display. Start typing in the Text Editor or Rich Text tab!</div>';
+                    return;
+                }
+                
+                // Calculate canvas size
+                let maxX = 0, maxY = 0;
+                this.schema.tables.forEach(table => {
+                    maxX = Math.max(maxX, table.position.x + 300);
+                    maxY = Math.max(maxY, table.position.y + 200);
+                });
+                
+                canvas.style.width = Math.max(maxX, window.innerWidth) + 'px';
+                canvas.style.height = Math.max(maxY, window.innerHeight - 200) + 'px';
+                connectionsLayer.setAttribute('width', canvas.style.width);
+                connectionsLayer.setAttribute('height', canvas.style.height);
+                
+                // Draw tables
+                this.schema.tables.forEach(table => {
+                    const card = this.createTableCard(table);
+                    canvas.appendChild(card);
+                });
+                
+                // Draw connections
+                this.drawConnections();
+            },
+
+            createTableCard(table) {
+                const card = document.createElement('div');
+                card.className = 'table-card';
+                card.style.left = table.position.x + 'px';
+                card.style.top = table.position.y + 'px';
+                card.dataset.tableId = table.id;
+                
+                let html = `<div class="table-header">${table.name}</div>`;
+                html += `<div class="table-body">`;
+                
+                table.fields.forEach(field => {
+                    html += `<div class="field-row">`;
+                    html += `<div class="field-name">${field.name}`;
+                    
+                    if (field.primaryKey) {
+                        html += `<span class="field-badge badge-primary">PK</span>`;
+                    }
+                    if (field.unique) {
+                        html += `<span class="field-badge badge-warning">UNIQUE</span>`;
+                    }
+                    
+                    html += `</div>`;
+                    html += `<div class="field-type">${field.type}</div>`;
+                    html += `</div>`;
+                });
+                
+                html += `</div>`;
+                card.innerHTML = html;
+                
+                return card;
+            },
+
+            drawConnections() {
+                const svg = document.getElementById('connectionsLayer');
+                const canvas = document.getElementById('canvas');
+                
+                this.schema.relationships.forEach(rel => {
+                    const [fromTable, fromField] = rel.from.split('.');
+                    const [toTable, toField] = rel.to.split('.');
+                    
+                    const fromCard = canvas.querySelector(`[data-table-id="${fromTable}"]`);
+                    const toCard = canvas.querySelector(`[data-table-id="${toTable}"]`);
+                    
+                    if (!fromCard || !toCard) return;
+                    
+                    const fromRect = fromCard.getBoundingClientRect();
+                    const toRect = toCard.getBoundingClientRect();
+                    const canvasRect = canvas.getBoundingClientRect();
+                    
+                    const x1 = fromRect.right - canvasRect.left;
+                    const y1 = fromRect.top + fromRect.height / 2 - canvasRect.top;
+                    const x2 = toRect.left - canvasRect.left;
+                    const y2 = toRect.top + toRect.height / 2 - canvasRect.top;
+                    
+                    if (this.settings.curvedLines) {
+                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        const midX = (x1 + x2) / 2;
+                        path.setAttribute('d', `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`);
+                        path.setAttribute('class', 'connection-line');
+                        svg.appendChild(path);
+                    } else {
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', x1);
+                        line.setAttribute('y1', y1);
+                        line.setAttribute('x2', x2);
+                        line.setAttribute('y2', y2);
+                        line.setAttribute('class', 'connection-line');
+                        svg.appendChild(line);
+                    }
+                    
+                    // Arrow
+                    const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                    const angle = Math.atan2(y2 - y1, x2 - x1);
+                    const arrowSize = 8;
+                    const points = [
+                        [x2, y2],
+                        [x2 - arrowSize * Math.cos(angle - Math.PI / 6), y2 - arrowSize * Math.sin(angle - Math.PI / 6)],
+                        [x2 - arrowSize * Math.cos(angle + Math.PI / 6), y2 - arrowSize * Math.sin(angle + Math.PI / 6)]
+                    ];
+                    arrow.setAttribute('points', points.map(p => p.join(',')).join(' '));
+                    arrow.setAttribute('class', 'connection-arrow');
+                    svg.appendChild(arrow);
+                });
+            },
+
+            startDrag(e) {
+                const card = e.target.closest('.table-card');
+                if (!card) return;
+                
+                this.dragging = card;
+                card.classList.add('dragging');
+                
+                const rect = card.getBoundingClientRect();
+                this.dragOffset = {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                };
+            },
+
+            drag(e) {
+                if (!this.dragging) return;
+                
+                const canvas = document.getElementById('canvas');
+                const canvasRect = canvas.getBoundingClientRect();
+                
+                const x = e.clientX - canvasRect.left - this.dragOffset.x;
+                const y = e.clientY - canvasRect.top - this.dragOffset.y;
+                
+                this.dragging.style.left = Math.max(0, x) + 'px';
+                this.dragging.style.top = Math.max(0, y) + 'px';
+                
+                this.drawConnections();
+            },
+
+            endDrag() {
+                if (!this.dragging) return;
+                
+                this.dragging.classList.remove('dragging');
+                
+                const tableId = this.dragging.dataset.tableId;
+                const table = this.schema.tables.find(t => t.id === tableId);
+                
+                if (table) {
+                    table.position = {
+                        x: parseInt(this.dragging.style.left),
+                        y: parseInt(this.dragging.style.top)
+                    };
+                    this.savePosition(table.name, table.position);
+                }
+                
+                this.dragging = null;
+            },
+
+            autoLayout() {
+                this.schema.tables.forEach((table, index) => {
+                    table.position = this.generatePosition(index);
+                    this.savePosition(table.name, table.position);
+                });
+                this.updateVisualSchema();
+            },
+
+            resetZoom() {
+                const container = document.getElementById('canvasContainer');
+                container.scrollTop = 0;
+                container.scrollLeft = 0;
+            },
+
+            switchView(viewName) {
+                this.currentView = viewName;
+                
+                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                
+                document.getElementById(viewName).classList.add('active');
+                document.querySelector(`[data-view="${viewName}"]`).classList.add('active');
+                
+                if (viewName === 'schema-visual') {
+                    setTimeout(() => this.drawConnections(), 100);
+                }
+            },
+
+            loadTemplate(templateName) {
+                if (!templateName) return;
+                
+                const templates = {
+                    school: `schools
+  id (primary)
+  name string
+  address text
+  created_at timestamp
+
+students
+  id (primary)
+  first_name string
+  last_name string
+  email email unique
+  date_of_birth date
+  school_id -> references schools
+  enrolled_at timestamp
+
+teachers
+  id (primary)
+  first_name string
+  last_name string
+  email email unique
+  subject string
+  school_id -> references schools
+  hired_at timestamp
+
+courses
+  id (primary)
+  course_name string
+  course_code string unique
+  teacher_id -> references teachers
+  school_id -> references schools
+  credits number
+
+enrollments
+  id (primary)
+  student_id -> references students
+  course_id -> references courses
+  grade string
+  enrolled_at timestamp`,
+
+                    messages: `users
+  id (primary)
+  username string unique
+  email email unique
+  display_name string
+  avatar_url url
+  status string
+  last_seen timestamp
+  created_at timestamp
+
+conversations
+  id (primary)
+  name string
+  is_group boolean
+  created_by -> references users
+  created_at timestamp
+
+messages
+  id (primary)
+  conversation_id -> references conversations
+  sender_id -> references users
+  content text
+  message_type string
+  sent_at timestamp
+  edited_at timestamp
+  is_deleted boolean
+
+conversation_members
+  id (primary)
+  conversation_id -> references conversations
+  user_id -> references users
+  joined_at timestamp
+  role string
+
+read_receipts
+  id (primary)
+  message_id -> references messages
+  user_id -> references users
+  read_at timestamp`,
+
+                    workplace: `companies
+  id (primary)
+  name string
+  industry string
+  founded_date date
+  created_at timestamp
+
+departments
+  id (primary)
+  name string
+  company_id -> references companies
+  manager_id -> references employees
+  budget number
+
+employees
+  id (primary)
+  first_name string
+  last_name string
+  email email unique
+  phone string
+  job_title string
+  department_id -> references departments
+  salary number
+  hire_date date
+  is_active boolean
+  created_at timestamp
+
+projects
+  id (primary)
+  name string
+  description text
+  department_id -> references departments
+  start_date date
+  end_date date
+  budget number
+  status string
+
+project_assignments
+  id (primary)
+  project_id -> references projects
+  employee_id -> references employees
+  role string
+  assigned_at timestamp
+
+time_entries
+  id (primary)
+  employee_id -> references employees
+  project_id -> references projects
+  hours number
+  description text
+  entry_date date`,
+
+                    ecommerce: `categories
+  id (primary)
+  name string
+  slug string unique
+  description text
+  parent_id -> references categories
+  created_at timestamp
+
+products
+  id (primary)
+  name string
+  slug string unique
+  description text
+  price number
+  stock_quantity number
+  category_id -> references categories
+  image_url url
+  is_active boolean
+  created_at timestamp
+
+customers
+  id (primary)
+  email email unique
+  first_name string
+  last_name string
+  phone string
+  created_at timestamp
+
+addresses
+  id (primary)
+  customer_id -> references customers
+  street_address text
+  city string
+  state string
+  postal_code string
+  country string
+  is_default boolean
+
+orders
+  id (primary)
+  customer_id -> references customers
+  order_number string unique
+  total_amount number
+  status string
+  shipping_address_id -> references addresses
+  ordered_at timestamp
+
+order_items
+  id (primary)
+  order_id -> references orders
+  product_id -> references products
+  quantity number
+  unit_price number
+  subtotal number
+
+reviews
+  id (primary)
+  product_id -> references products
+  customer_id -> references customers
+  rating number
+  comment text
+  created_at timestamp`
+                };
+                
+                document.getElementById('schemaInput').value = templates[templateName] || '';
+                this.parseSchema();
+            },
+
+            showWarnings(warnings) {
+                const panel = document.getElementById('warningsPanel');
+                panel.innerHTML = '';
+                
+                warnings.forEach(warning => {
+                    const item = document.createElement('div');
+                    item.className = 'warning-item';
+                    item.textContent = '⚠️ ' + warning;
+                    panel.appendChild(item);
+                    
+                    setTimeout(() => item.remove(), 5000);
+                });
+            },
+
+            openSettings() {
+                document.getElementById('settingsModal').classList.add('active');
+            },
+
+            closeSettings() {
+                document.getElementById('settingsModal').classList.remove('active');
+            },
+
+            updateSettings() {
+                this.settings.curvedLines = document.getElementById('curvedLines').checked;
+                this.settings.autoSave = document.getElementById('autoSave').checked;
+                this.settings.liveValidation = document.getElementById('liveValidation').checked;
+                
+                localStorage.setItem('settings', JSON.stringify(this.settings));
+                this.updateVisualSchema();
+            },
+
+            loadSettings() {
+                const saved = localStorage.getItem('settings');
+                if (saved) {
+                    this.settings = JSON.parse(saved);
+                    document.getElementById('curvedLines').checked = this.settings.curvedLines;
+                    document.getElementById('autoSave').checked = this.settings.autoSave;
+                    document.getElementById('liveValidation').checked = this.settings.liveValidation;
+                }
+            },
+
+            saveToStorage() {
+                const input = document.getElementById('schemaInput').value;
+                const richInput = document.getElementById('richTextInput').value;
+                localStorage.setItem('schemaInput', input);
+                localStorage.setItem('richTextInput', richInput);
+            },
+
+            loadFromStorage() {
+                const saved = localStorage.getItem('schemaInput');
+                const richSaved = localStorage.getItem('richTextInput');
+                if (saved) {
+                    document.getElementById('schemaInput').value = saved;
+                }
+                if (richSaved) {
+                    document.getElementById('richTextInput').value = richSaved;
+                    this.parseRichText();
+                }
+            },
+
+            clearAll() {
+                if (confirm('Are you sure you want to clear everything?')) {
+                    document.getElementById('schemaInput').value = '';
+                    document.getElementById('richTextInput').value = '';
+                    localStorage.removeItem('schemaInput');
+                    localStorage.removeItem('richTextInput');
+                    localStorage.removeItem('tablePositions');
+                    this.parseSchema();
+                    this.parseRichText();
+                }
+            },
+
+            copyToClipboard() {
+                const output = document.getElementById('schemaOutput').textContent;
+                navigator.clipboard.writeText(output).then(() => {
+                    alert('Copied to clipboard!');
+                });
+            },
+
+            async exportPDF() {
+                if (!window.jspdf) {
+                    alert('PDF library not loaded. Please refresh the page.');
+                    return;
+                }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFontSize(20);
+                doc.text('Database Schema', 20, 20);
+                
+                doc.setFontSize(10);
+                let y = 40;
+                
+                this.schema.tables.forEach(table => {
+                    if (y > 270) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    
+                    doc.setFontSize(14);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(table.name, 20, y);
+                    y += 8;
+                    
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'normal');
+                    
+                    table.fields.forEach(field => {
+                        let fieldText = `  ${field.name}: ${field.type}`;
+                        if (field.primaryKey) fieldText += ' [PK]';
+                        if (field.unique) fieldText += ' [UNIQUE]';
+                        if (field.references) fieldText += ` -> ${field.references}`;
+                        
+                        doc.text(fieldText, 20, y);
+                        y += 6;
+                    });
+                    
+                    y += 10;
+                });
+                
+                doc.save('database-schema.pdf');
+            },
+
+            toPascalCase(str) {
+                return str.replace(/_/g, ' ')
+                    .split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                    .join('');
+            }
+        };
+
+        // Initialize app
+        window.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>
