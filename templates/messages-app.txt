@@ -1,0 +1,72 @@
+users
+  id (primary)
+  username string unique
+  email email unique
+  display_name string
+  avatar_url url
+  bio text
+  status string
+  last_seen timestamp
+  created_at timestamp
+  is_online boolean
+
+conversations
+  id (primary)
+  name string
+  is_group boolean
+  avatar_url url
+  description text
+  created_by -> references users
+  created_at timestamp
+  updated_at timestamp
+
+messages
+  id (primary)
+  conversation_id -> references conversations
+  sender_id -> references users
+  content text
+  message_type string
+  attachment_url url
+  sent_at timestamp
+  edited_at timestamp
+  is_deleted boolean
+  reply_to_id -> references messages
+
+conversation_members
+  id (primary)
+  conversation_id -> references conversations
+  user_id -> references users
+  role string
+  joined_at timestamp
+  left_at timestamp
+  is_muted boolean
+  is_pinned boolean
+
+read_receipts
+  id (primary)
+  message_id -> references messages
+  user_id -> references users
+  read_at timestamp
+
+reactions
+  id (primary)
+  message_id -> references messages
+  user_id -> references users
+  emoji string
+  created_at timestamp
+
+notifications
+  id (primary)
+  user_id -> references users
+  type string
+  title string
+  content text
+  is_read boolean
+  action_url url
+  created_at timestamp
+
+blocked_users
+  id (primary)
+  blocker_id -> references users
+  blocked_id -> references users
+  blocked_at timestamp
