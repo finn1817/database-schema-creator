@@ -1,0 +1,128 @@
+categories
+  id (primary)
+  name string
+  slug string unique
+  description text
+  parent_id -> references categories
+  image_url url
+  sort_order number
+  is_active boolean
+  created_at timestamp
+
+products
+  id (primary)
+  name string
+  slug string unique
+  sku string unique
+  description text
+  price number
+  compare_at_price number
+  cost number
+  stock_quantity number
+  low_stock_threshold number
+  category_id -> references categories
+  brand string
+  weight number
+  dimensions text
+  image_url url
+  is_active boolean
+  is_featured boolean
+  created_at timestamp
+
+product_images
+  id (primary)
+  product_id -> references products
+  image_url url
+  alt_text string
+  sort_order number
+
+product_variants
+  id (primary)
+  product_id -> references products
+  variant_name string
+  sku string unique
+  price number
+  stock_quantity number
+  attributes json
+
+customers
+  id (primary)
+  email email unique
+  first_name string
+  last_name string
+  phone string
+  date_of_birth date
+  accepts_marketing boolean
+  created_at timestamp
+  last_order_at timestamp
+
+addresses
+  id (primary)
+  customer_id -> references customers
+  address_type string
+  street_address text
+  apartment string
+  city string
+  state string
+  postal_code string
+  country string
+  is_default boolean
+
+orders
+  id (primary)
+  customer_id -> references customers
+  order_number string unique
+  subtotal number
+  tax_amount number
+  shipping_cost number
+  discount_amount number
+  total_amount number
+  status string
+  payment_status string
+  fulfillment_status string
+  shipping_address_id -> references addresses
+  billing_address_id -> references addresses
+  notes text
+  ordered_at timestamp
+  shipped_at timestamp
+  delivered_at timestamp
+
+order_items
+  id (primary)
+  order_id -> references orders
+  product_id -> references products
+  variant_id -> references product_variants
+  quantity number
+  unit_price number
+  discount_amount number
+  tax_amount number
+  subtotal number
+
+reviews
+  id (primary)
+  product_id -> references products
+  customer_id -> references customers
+  rating number
+  title string
+  comment text
+  is_verified_purchase boolean
+  helpful_count number
+  created_at timestamp
+
+coupons
+  id (primary)
+  code string unique
+  discount_type string
+  discount_value number
+  minimum_purchase number
+  usage_limit number
+  usage_count number
+  starts_at timestamp
+  expires_at timestamp
+  is_active boolean
+
+wishlists
+  id (primary)
+  customer_id -> references customers
+  product_id -> references products
+  added_at timestamp
