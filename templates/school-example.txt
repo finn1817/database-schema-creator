@@ -1,0 +1,86 @@
+schools
+  id (primary)
+  name string
+  address text
+  city string
+  state string
+  postal_code string
+  phone string
+  email email
+  principal_name string
+  created_at timestamp
+
+students
+  id (primary)
+  first_name string
+  last_name string
+  email email unique
+  date_of_birth date
+  grade_level number
+  student_number string unique
+  school_id -> references schools
+  guardian_name string
+  guardian_phone string
+  guardian_email email
+  enrolled_at timestamp
+  is_active boolean
+
+teachers
+  id (primary)
+  first_name string
+  last_name string
+  email email unique
+  phone string
+  subject string
+  certification_number string
+  school_id -> references schools
+  department string
+  hired_at timestamp
+  is_active boolean
+
+courses
+  id (primary)
+  course_name string
+  course_code string unique
+  description text
+  teacher_id -> references teachers
+  school_id -> references schools
+  credits number
+  max_students number
+  semester string
+  year number
+
+enrollments
+  id (primary)
+  student_id -> references students
+  course_id -> references courses
+  grade string
+  attendance_percentage number
+  enrolled_at timestamp
+  completed_at timestamp
+
+assignments
+  id (primary)
+  course_id -> references courses
+  title string
+  description text
+  due_date timestamp
+  max_points number
+  assignment_type string
+
+grades
+  id (primary)
+  student_id -> references students
+  assignment_id -> references assignments
+  points_earned number
+  submitted_at timestamp
+  graded_at timestamp
+  feedback text
+
+attendance
+  id (primary)
+  student_id -> references students
+  course_id -> references courses
+  attendance_date date
+  status string
+  notes text
